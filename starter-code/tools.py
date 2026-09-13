@@ -11,15 +11,24 @@ def get_flight_info(origin: str, destination: str, max_price: int = 5000000) -> 
     flight_file = os.path.join(RAW_DATA_DIR, "flight_data.json")
     if not os.path.exists(flight_file):
         return []
-    
+
+    if not isinstance(origin, str) or not isinstance(destination, str):
+        return []
+    try:
+        max_price = int(max_price)
+    except (TypeError, ValueError):
+        return []
+
     with open(flight_file, "r", encoding="utf-8") as f:
         flights = json.load(f)
-    
+
+    origin = origin.strip().upper()
+    destination = destination.strip().upper()
     results = [
         fl for fl in flights
-        if fl["origin"].upper() == origin.upper()
-        and fl["destination"].upper() == destination.upper()
-        and fl["price_vnd"] <= max_price
+        if fl.get("origin", "").strip().upper() == origin
+        and fl.get("destination", "").strip().upper() == destination
+        and fl.get("price_vnd", float("inf")) <= max_price
     ]
     return results
 
@@ -31,10 +40,14 @@ def get_weather_forecast(city_code: str) -> Dict[str, Any]:
     if not os.path.exists(weather_file):
         return {"error": "Weather data not found"}
     
+    if not isinstance(city_code, str) or not city_code.strip():
+        return {"error": "City code is required"}
+
     with open(weather_file, "r", encoding="utf-8") as f:
         weather_data = json.load(f)
-    
-    return weather_data.get(city_code.upper(), {"error": f"No data for {city_code}"})
+
+    city_code = city_code.strip().upper()
+    return weather_data.get(city_code, {"error": f"No data for {city_code}"})
 
 # Tool Registry for ReAct Agent
 TOOL_DEFINITIONS = [
